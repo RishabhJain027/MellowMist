@@ -142,12 +142,19 @@ export class AudioEngine {
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   private async loadBuffer(url: string): Promise<AudioBuffer> {
-    if (this.bufferCache.has(url)) return this.bufferCache.get(url)!;
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`Failed to fetch audio: ${url} (${response.status})`);
+    const base = (typeof import.meta !== "undefined" && import.meta.env?.BASE_URL)
+      ? import.meta.env.BASE_URL.replace(/\/$/, "")
+      : "";
+    const resolvedUrl = url.startsWith("http") || !base
+      ? url
+      : `${base}${url.startsWith("/") ? "" : "/"}${url}`;
+
+    if (this.bufferCache.has(resolvedUrl)) return this.bufferCache.get(resolvedUrl)!;
+    const response = await fetch(resolvedUrl);
+    if (!response.ok) throw new Error(`Failed to fetch audio: ${resolvedUrl} (${response.status})`);
     const arrayBuffer = await response.arrayBuffer();
     const audioBuffer = await this.context.decodeAudioData(arrayBuffer);
-    this.bufferCache.set(url, audioBuffer);
+    this.bufferCache.set(resolvedUrl, audioBuffer);
     return audioBuffer;
   }
 

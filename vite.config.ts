@@ -4,7 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
 
 export default defineConfig({
-  base: './',
+  base: '/MellowMist/',
   server: {
     port: 5173,
     host: true,
@@ -31,7 +31,7 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 15 * 1024 * 1024,
         runtimeCaching: [
           {
-            urlPattern: /^\/audio\//,
+            urlPattern: /.*\/audio\/.*/,
             handler: 'CacheFirst',
             options: {
               cacheName: 'audio-cache',

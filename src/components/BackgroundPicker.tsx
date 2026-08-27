@@ -40,19 +40,21 @@ interface BackgroundVideoProps {
 
 export function BackgroundVideo({ theme }: BackgroundVideoProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+  const videoSrc = `${base}/videos/${theme}.mp4`;
 
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
-    v.src = `/videos/${theme}.mp4`;
+    v.src = videoSrc;
     v.load();
     const playPromise = v.play();
     if (playPromise !== undefined) {
       playPromise.catch(() => {
-        // autoplay without interaction handled gracefully
+        // autoplay without user interaction handled gracefully
       });
     }
-  }, [theme]);
+  }, [videoSrc]);
 
   return (
     <div className="video-background-wrapper" aria-hidden="true">
@@ -60,7 +62,7 @@ export function BackgroundVideo({ theme }: BackgroundVideoProps) {
         ref={videoRef}
         key={theme}
         className="bg-video"
-        src={`/videos/${theme}.mp4`}
+        src={videoSrc}
         autoPlay
         loop
         muted
