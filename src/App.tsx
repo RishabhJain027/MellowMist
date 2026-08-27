@@ -82,7 +82,7 @@ export default function App() {
     engine.setMasterVolume(mix.masterVolume);
   }, [isPlaying, mix.layers, mix.masterVolume, getEngine]);
 
-  // Meander audio modulation (pure Web Audio gain updates, ZERO React state triggers)
+  // Meander audio modulation
   const enabledLayerIds = mix.layers
     .filter((l) => l.enabled)
     .map((l) => l.soundId)
@@ -191,16 +191,30 @@ export default function App() {
 
   return (
     <div className="app">
-      {/* Background Video Component */}
+      {/* Background Video Component with Smooth Translucent Scrim */}
       <BackgroundVideo theme={theme} />
 
-      {/* Top Glass Navbar */}
+      {/* Top Translucent Glass Navbar */}
       <header className="navbar">
         <div className="navbar__brand">
-          <div className="navbar__brand-badge">🌫️</div>
+          <div className="navbar__brand-logo" aria-hidden="true">
+            <svg viewBox="0 0 128 128" width="28" height="28">
+              <defs>
+                <linearGradient id="logoWaveGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#2dd4bf" />
+                  <stop offset="50%" stop-color="#38bdf8" />
+                  <stop offset="100%" stop-color="#818cf8" />
+                </linearGradient>
+              </defs>
+              <rect width="128" height="128" rx="30" fill="#0f172a" />
+              <path d="M 28 48 C 44 38, 56 58, 72 48 C 88 38, 100 52, 100 52" fill="none" stroke="url(#logoWaveGrad)" stroke-width="8" stroke-linecap="round" />
+              <path d="M 28 66 C 44 54, 60 76, 76 64 C 88 56, 100 70, 100 70" fill="none" stroke="url(#logoWaveGrad)" stroke-width="8" stroke-linecap="round" />
+              <path d="M 28 84 C 42 74, 58 92, 74 82 C 86 76, 100 86, 100 86" fill="none" stroke="url(#logoWaveGrad)" stroke-width="8" stroke-linecap="round" />
+            </svg>
+          </div>
           <div>
             <span className="navbar__title">MellowMist</span>
-            <span className="navbar__subtitle">Acoustic Atmosphere</span>
+            <span className="navbar__subtitle">Ambient Mixer</span>
           </div>
         </div>
 
@@ -237,30 +251,26 @@ export default function App() {
 
       {/* Main Workspace Layout */}
       <main className="main-content">
-        <section className="hero-header">
-          <div>
-            <span className="hero-header__badge">Ambient Sound Studio</span>
-            <h1 className="hero-header__title">Sculpt your soundscape.</h1>
-            <p className="hero-header__subtitle">
-              Layer natural frequencies, white noise, and relaxing ambiences for focus and deep rest.
-            </p>
-          </div>
-
-          <div className="live-metrics">
-            <div className="metric-card">
-              <span className="metric-card__number">{activeLayersCount}</span>
-              <span className="metric-card__label">Active Sounds</span>
-            </div>
-            <div className="metric-card">
-              <span className="metric-card__number">{Math.round(mix.masterVolume * 100)}%</span>
-              <span className="metric-card__label">Master Output</span>
-            </div>
-          </div>
-        </section>
-
         {/* Master Control Dock */}
         <section className="master-controller" aria-label="Master Controls">
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", flexWrap: "wrap", gap: "1rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "1.25rem" }}>
+              <div className="status-pill">
+                <span className={`status-pill__dot ${isPlaying ? "status-pill__dot--live" : ""}`} />
+                <span>{isPlaying ? "Live Audio Active" : "Mixer Ready"}</span>
+              </div>
+              <div style={{ fontSize: "0.82rem", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
+                <span>{activeLayersCount} active / {sounds.length} tracks</span>
+              </div>
+            </div>
+
+            <div style={{ fontSize: "0.8rem", color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: 600 }}>
+              Theme: <span style={{ color: "var(--text-main)" }}>{theme}</span>
+            </div>
+          </div>
+
           <MixerControls onPlayPause={handlePlayPause} />
+
           {isPlaying && (
             <div style={{ width: "100%", height: "24px" }}>
               <Visualizer engine={engineRef.current} isPlaying={isPlaying} width={1200} height={24} />
@@ -290,12 +300,30 @@ export default function App() {
       {/* Footer */}
       <footer className="app-footer">
         <div>
-          <span>MellowMist — Original Ambient Studio. </span>
+          <span>MellowMist — Original Ambient Mixer Studio. </span>
           <button type="button" onClick={() => setShowAttribution(true)}>
-            License & Credits
+            Credits &amp; Audio Licenses
           </button>
         </div>
-        <span>Environment: {theme.toUpperCase()}</span>
+        <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+          <a
+            href="https://github.com/RishabhJain027/MellowMist"
+            target="_blank"
+            rel="noreferrer noopener"
+            style={{ color: "var(--text-muted)", textDecoration: "none" }}
+          >
+            GitHub
+          </a>
+          <span>•</span>
+          <a
+            href="https://www.linkedin.com/in/rish-abh27/"
+            target="_blank"
+            rel="noreferrer noopener"
+            style={{ color: "var(--text-muted)", textDecoration: "none" }}
+          >
+            LinkedIn
+          </a>
+        </div>
       </footer>
 
       {showShare && <ShareDialog onClose={() => setShowShare(false)} />}
