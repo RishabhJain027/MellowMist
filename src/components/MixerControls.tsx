@@ -11,6 +11,8 @@ export function MixerControls({ onPlayPause }: MixerControlsProps) {
   const meanderEnabled = useMixStore((s) => s.mix.meanderEnabled);
   const setMasterVolume = useMixStore((s) => s.setMasterVolume);
   const setMeanderEnabled = useMixStore((s) => s.setMeanderEnabled);
+  const muteAllLayers = useMixStore((s) => s.muteAllLayers);
+  const randomizeMix = useMixStore((s) => s.randomizeMix);
 
   const handleMasterVolume = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -23,6 +25,13 @@ export function MixerControls({ onPlayPause }: MixerControlsProps) {
     setMeanderEnabled(!meanderEnabled);
   }, [setMeanderEnabled, meanderEnabled]);
 
+  const handleRandomize = useCallback(() => {
+    randomizeMix();
+    if (!isPlaying) {
+      onPlayPause();
+    }
+  }, [randomizeMix, isPlaying, onPlayPause]);
+
   return (
     <div className="mixer-dock" role="toolbar" aria-label="Master Controls">
       <button
@@ -31,6 +40,7 @@ export function MixerControls({ onPlayPause }: MixerControlsProps) {
         aria-label={isPlaying ? "Pause audio" : "Play audio"}
         aria-pressed={isPlaying}
         type="button"
+        title={isPlaying ? "Pause playback" : "Start playback"}
       >
         {isPlaying ? "⏸" : "▶"}
       </button>
@@ -54,16 +64,37 @@ export function MixerControls({ onPlayPause }: MixerControlsProps) {
         </span>
       </div>
 
-      <button
-        className={`btn-meander ${meanderEnabled ? "btn-meander--active" : ""}`}
-        onClick={handleMeander}
-        aria-pressed={meanderEnabled}
-        aria-label="Toggle Meander low-frequency random walk"
-        type="button"
-      >
-        <span aria-hidden="true">〰️</span>
-        Meander Drift
-      </button>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
+        <button
+          className={`btn-meander ${meanderEnabled ? "btn-meander--active" : ""}`}
+          onClick={handleMeander}
+          aria-pressed={meanderEnabled}
+          aria-label="Toggle Meander low-frequency random walk"
+          type="button"
+          title="Slowly and naturally modulate volumes over time"
+        >
+          <span aria-hidden="true">〰️</span>
+          Meander
+        </button>
+
+        <button
+          type="button"
+          className="btn-nav"
+          onClick={handleRandomize}
+          title="Create a surprising random ambient sound combination"
+        >
+          <span>🎲</span> Random Mix
+        </button>
+
+        <button
+          type="button"
+          className="btn-nav"
+          onClick={muteAllLayers}
+          title="Clear / mute all active sound layers"
+        >
+          <span>🔇</span> Clear All
+        </button>
+      </div>
     </div>
   );
 }

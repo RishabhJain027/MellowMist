@@ -12,86 +12,92 @@ import type { SoundDefinition } from "./mixSchema";
 
 const sounds = manifestData as SoundDefinition[];
 
-// ─── Built-in presets ─────────────────────────────────────────────────────────
+// ─── Preset layer maker ───────────────────────────────────────────────────────
 
-function makeLayer(soundId: string, baseVolume: number): LayerState {
-  return { soundId, enabled: true, baseVolume, meanderMultiplier: 1 };
+function makePresetLayers(activeSpecs: { soundId: string; baseVolume: number }[]): LayerState[] {
+  const activeMap = new Map(activeSpecs.map((s) => [s.soundId, s.baseVolume]));
+  return sounds.map((s) => ({
+    soundId: s.id,
+    enabled: activeMap.has(s.id),
+    baseVolume: activeMap.has(s.id) ? activeMap.get(s.id)! : s.defaultVolume,
+    meanderMultiplier: 1,
+  }));
 }
 
-const BUILT_IN_PRESETS: Preset[] = [
+export const BUILT_IN_PRESETS: Preset[] = [
   {
     id: "preset-rainy-focus",
     name: "Rainy Focus",
-    description: "Rain and café for deep work.",
+    description: "Rain, café chatter, and distant storm.",
     builtIn: true,
     mix: makeMix("Rainy Focus", [
-      makeLayer("rain", 0.55),
-      makeLayer("coffee", 0.25),
-      makeLayer("storm", 0.15),
+      { soundId: "rain", baseVolume: 0.55 },
+      { soundId: "coffee", baseVolume: 0.30 },
+      { soundId: "storm", baseVolume: 0.20 },
     ]),
   },
   {
     id: "preset-deep-sleep",
     name: "Deep Sleep",
-    description: "Brown noise and ocean waves.",
+    description: "Brown noise, ocean waves, and gentle rain.",
     builtIn: true,
     mix: makeMix("Deep Sleep", [
-      makeLayer("brown-noise", 0.45),
-      makeLayer("waves", 0.35),
-      makeLayer("rain", 0.20),
+      { soundId: "brown-noise", baseVolume: 0.50 },
+      { soundId: "waves", baseVolume: 0.40 },
+      { soundId: "rain", baseVolume: 0.25 },
     ]),
   },
   {
     id: "preset-forest-walk",
     name: "Forest Walk",
-    description: "Birds, wind, and a stream.",
+    description: "Birds, forest wind, and babbling stream.",
     builtIn: true,
     mix: makeMix("Forest Walk", [
-      makeLayer("birds-tree", 0.50),
-      makeLayer("wind", 0.30),
-      makeLayer("stream-water", 0.40),
+      { soundId: "birds-tree", baseVolume: 0.55 },
+      { soundId: "wind", baseVolume: 0.35 },
+      { soundId: "stream-water", baseVolume: 0.45 },
     ]),
   },
   {
     id: "preset-fireplace",
     name: "Cozy Fireplace",
-    description: "Fire with gentle rain.",
+    description: "Crackling fire and rain on tent.",
     builtIn: true,
     mix: makeMix("Cozy Fireplace", [
-      makeLayer("fire", 0.55),
-      makeLayer("rain-on-tent", 0.30),
-      makeLayer("wind", 0.15),
+      { soundId: "fire", baseVolume: 0.60 },
+      { soundId: "rain-on-tent", baseVolume: 0.35 },
+      { soundId: "wind", baseVolume: 0.20 },
     ]),
   },
   {
     id: "preset-zen",
     name: "Zen Garden",
-    description: "Singing bowl, leaves, waterfall.",
+    description: "Singing bowl, leaves, and waterfall.",
     builtIn: true,
     mix: makeMix("Zen Garden", [
-      makeLayer("singing-bowl", 0.35),
-      makeLayer("leaves", 0.30),
-      makeLayer("waterfall", 0.40),
+      { soundId: "singing-bowl", baseVolume: 0.40 },
+      { soundId: "leaves", baseVolume: 0.35 },
+      { soundId: "waterfall", baseVolume: 0.45 },
     ]),
   },
   {
     id: "preset-night",
     name: "Night Crickets",
-    description: "Night sounds and pink noise.",
+    description: "Night crickets and pink noise.",
     builtIn: true,
     mix: makeMix("Night Crickets", [
-      makeLayer("night", 0.50),
-      makeLayer("pink-noise", 0.20),
+      { soundId: "night", baseVolume: 0.55 },
+      { soundId: "pink-noise", baseVolume: 0.25 },
     ]),
   },
 ];
 
-function makeMix(name: string, layers: LayerState[]): MixState {
+function makeMix(name: string, activeSpecs: { soundId: string; baseVolume: number }[]): MixState {
   const now = new Date().toISOString();
   return {
     schemaVersion: 1,
     name,
-    layers,
+    layers: makePresetLayers(activeSpecs),
     masterVolume: 0.8,
     meanderEnabled: true,
     timer: makeIdleTimer(),
@@ -136,14 +142,26 @@ function buildInitialState(): MixState {
   }
 
   const saved = loadMix();
-  if (saved) return saved;
+  if (saved && Array.isArray(saved.layers)) {
+    // Ensure all manifest sounds exist even if old saved mix had fewer
+    const savedMap = new Map(saved.layers.map((l) => [l.soundId, l]));
+    return {
+      ...saved,
+      layers: sounds.map((s) => {
+        const existing = savedMap.get(s.id);
+        return existing
+          ? { ...existing }
+          : { soundId: s.id, enabled: false, baseVolume: s.defaultVolume, meanderMultiplier: 1 };
+      }),
+    };
+  }
 
   return {
     schemaVersion: 1,
     name: "My Mix",
     layers: buildInitialLayers(),
     masterVolume: 0.8,
-    meanderEnabled: false,
+    meanderEnabled: true,
     timer: makeIdleTimer(),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -159,8 +177,11 @@ interface MixStore {
 
   // Layer actions
   toggleLayer: (soundId: string) => void;
+  enableLayer: (soundId: string, enabled: boolean) => void;
   setLayerVolume: (soundId: string, volume: number) => void;
   setLayerMeander: (soundId: string, multiplier: number) => void;
+  muteAllLayers: () => void;
+  randomizeMix: () => void;
 
   // Master
   setMasterVolume: (volume: number) => void;
@@ -214,6 +235,13 @@ export const useMixStore = create<MixStore>((set, get) => {
         ),
       })),
 
+    enableLayer: (soundId, enabled) =>
+      updateMix((m) => ({
+        layers: m.layers.map((l) =>
+          l.soundId === soundId ? { ...l, enabled } : l
+        ),
+      })),
+
     setLayerVolume: (soundId, volume) =>
       updateMix((m) => ({
         layers: m.layers.map((l) =>
@@ -230,6 +258,28 @@ export const useMixStore = create<MixStore>((set, get) => {
           ),
         },
       })),
+
+    muteAllLayers: () =>
+      updateMix((m) => ({
+        layers: m.layers.map((l) => ({ ...l, enabled: false })),
+      })),
+
+    randomizeMix: () => {
+      const chosenCount = 3 + Math.floor(Math.random() * 3); // 3 to 5 sounds
+      const shuffled = [...sounds].sort(() => 0.5 - Math.random());
+      const selectedIds = new Set(shuffled.slice(0, chosenCount).map((s) => s.id));
+
+      updateMix((m) => ({
+        name: "Random Mix",
+        layers: m.layers.map((l) => ({
+          ...l,
+          enabled: selectedIds.has(l.soundId),
+          baseVolume: selectedIds.has(l.soundId)
+            ? 0.25 + Math.random() * 0.55
+            : l.baseVolume,
+        })),
+      }));
+    },
 
     setMasterVolume: (volume) => updateMix(() => ({ masterVolume: volume })),
 
@@ -256,7 +306,20 @@ export const useMixStore = create<MixStore>((set, get) => {
 
     loadPreset: (preset) =>
       set(() => {
-        const loaded = { ...preset.mix, updatedAt: new Date().toISOString() };
+        // Ensure all manifest sounds are represented
+        const presetMap = new Map(preset.mix.layers.map((l) => [l.soundId, l]));
+        const fullLayers = sounds.map((s) => {
+          const l = presetMap.get(s.id);
+          return l
+            ? { ...l }
+            : { soundId: s.id, enabled: false, baseVolume: s.defaultVolume, meanderMultiplier: 1 };
+        });
+
+        const loaded: MixState = {
+          ...preset.mix,
+          layers: fullLayers,
+          updatedAt: new Date().toISOString(),
+        };
         saveMix(loaded);
         return { mix: loaded };
       }),
@@ -286,6 +349,3 @@ export const useMixStore = create<MixStore>((set, get) => {
     setMixName: (name) => updateMix(() => ({ name })),
   };
 });
-
-export { BUILT_IN_PRESETS };
-export type { MixStore };
