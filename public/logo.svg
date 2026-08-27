@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="100%" height="100%">
+  <defs>
+    <!-- Background Radial Glow -->
+    <radialGradient id="bgGlow" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#0f2b38" />
+      <stop offset="60%" stop-color="#070d18" />
+      <stop offset="100%" stop-color="#030509" />
+    </radialGradient>
+
+    <!-- Mist Wave Gradients -->
+    <linearGradient id="waveCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5eead4" />
+      <stop offset="50%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#818cf8" />
+    </linearGradient>
+
+    <linearGradient id="waveViolet" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="60%" stop-color="#818cf8" />
+      <stop offset="100%" stop-color="#c084fc" />
+    </linearGradient>
+
+    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="rgba(94, 234, 212, 0.5)" />
+      <stop offset="50%" stop-color="rgba(56, 189, 248, 0.2)" />
+      <stop offset="100%" stop-color="rgba(255, 255, 255, 0.05)" />
+    </linearGradient>
+
+    <!-- Glass Bevel Drop Shadows -->
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Container Base -->
+  <rect width="256" height="256" rx="64" fill="url(#bgGlow)" stroke="url(#ringGrad)" stroke-width="2.5" />
+
+  <!-- Outer Sound Resonance Rings -->
+  <circle cx="128" cy="128" r="88" fill="none" stroke="rgba(94, 234, 212, 0.08)" stroke-width="1.5" stroke-dasharray="4 6" />
+  <circle cx="128" cy="128" r="70" fill="none" stroke="rgba(56, 189, 248, 0.12)" stroke-width="1.5" />
+
+  <!-- Central Acoustic Mist Waveforms -->
+  <g filter="url(#softGlow)">
+    <!-- Top Fluid Wave -->
+    <path d="M 56 100 C 84 80, 108 120, 136 100 C 164 80, 184 104, 200 100" 
+          fill="none" 
+          stroke="url(#waveCyan)" 
+          stroke-width="9" 
+          stroke-linecap="round" 
+          opacity="0.85" />
+
+    <!-- Center Crest Wave (Dominant) -->
+    <path d="M 56 132 C 84 110, 116 150, 144 128 C 168 112, 184 138, 200 132" 
+          fill="none" 
+          stroke="url(#waveCyan)" 
+          stroke-width="11" 
+          stroke-linecap="round" />
+
+    <!-- Bottom Deep Ocean Wave -->
+    <path d="M 56 164 C 80 148, 112 178, 140 160 C 164 148, 184 170, 200 164" 
+          fill="none" 
+          stroke="url(#waveViolet)" 
+          stroke-width="9" 
+          stroke-linecap="round" 
+          opacity="0.75" />
+
+    <!-- Harmonic Sound Droplets -->
+    <circle cx="178" cy="84" r="5" fill="#5eead4" />
+    <circle cx="80" cy="154" r="4" fill="#38bdf8" />
+  </g>
+</svg>

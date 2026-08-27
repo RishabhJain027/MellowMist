@@ -198,18 +198,24 @@ export default function App() {
       <header className="navbar">
         <div className="navbar__brand">
           <div className="navbar__brand-logo" aria-hidden="true">
-            <svg viewBox="0 0 128 128" width="28" height="28">
+            <svg viewBox="0 0 256 256" width="32" height="32">
               <defs>
-                <linearGradient id="logoWaveGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#2dd4bf" />
+                <radialGradient id="nbGlow" cx="50%" cy="40%" r="60%">
+                  <stop offset="0%" stop-color="#0f2b38" />
+                  <stop offset="100%" stop-color="#070d18" />
+                </radialGradient>
+                <linearGradient id="nbCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#5eead4" />
                   <stop offset="50%" stop-color="#38bdf8" />
                   <stop offset="100%" stop-color="#818cf8" />
                 </linearGradient>
               </defs>
-              <rect width="128" height="128" rx="30" fill="#0f172a" />
-              <path d="M 28 48 C 44 38, 56 58, 72 48 C 88 38, 100 52, 100 52" fill="none" stroke="url(#logoWaveGrad)" stroke-width="8" stroke-linecap="round" />
-              <path d="M 28 66 C 44 54, 60 76, 76 64 C 88 56, 100 70, 100 70" fill="none" stroke="url(#logoWaveGrad)" stroke-width="8" stroke-linecap="round" />
-              <path d="M 28 84 C 42 74, 58 92, 74 82 C 86 76, 100 86, 100 86" fill="none" stroke="url(#logoWaveGrad)" stroke-width="8" stroke-linecap="round" />
+              <rect width="256" height="256" rx="64" fill="url(#nbGlow)" stroke="rgba(94, 234, 212, 0.3)" stroke-width="3" />
+              <circle cx="128" cy="128" r="88" fill="none" stroke="rgba(94, 234, 212, 0.1)" stroke-width="2" stroke-dasharray="4 6" />
+              <path d="M 56 100 C 84 80, 108 120, 136 100 C 164 80, 184 104, 200 100" fill="none" stroke="url(#nbCyan)" stroke-width="11" stroke-linecap="round" />
+              <path d="M 56 132 C 84 110, 116 150, 144 128 C 168 112, 184 138, 200 132" fill="none" stroke="url(#nbCyan)" stroke-width="13" stroke-linecap="round" />
+              <path d="M 56 164 C 80 148, 112 178, 140 160 C 164 148, 184 170, 200 164" fill="none" stroke="url(#nbCyan)" stroke-width="10" stroke-linecap="round" opacity="0.8" />
+              <circle cx="178" cy="84" r="6" fill="#5eead4" />
             </svg>
           </div>
           <div>
