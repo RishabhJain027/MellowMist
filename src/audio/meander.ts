@@ -1,22 +1,19 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // meander.ts — Bounded low-frequency random walk (blueprint §5.4)
-// Produces slow, smooth volume modulation per sound layer.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { clamp01 } from "./AudioEngine";
+
+export const MEANDER_MIN = 0.78;
+export const MEANDER_MAX = 1.20;
 
 export type MeanderCleanup = () => void;
 
 /**
  * Start a meander modulation loop for one layer.
  *
- * - Picks a new target multiplier in [0.78, 1.20] every 1.8–4.4 s.
- * - Eases toward it using a cubic smooth-step over requestAnimationFrame.
- * - Calls setOutput(clamp01(baseVolume × multiplier)) on each frame.
- * - Returns a cleanup function to stop the loop.
- *
- * For tab-visibility robustness, gain ramps should also be scheduled on
- * the audio clock by the caller (hybrid approach per blueprint note §5.4).
+ * - Smoothly ramps the audio gain node directly on the AudioContext timeline.
+ * - Updates visual UI state throttled every 250ms without causing render thrashing.
  */
 export function startMeander(
   _layerId: string,
@@ -28,38 +25,46 @@ export function startMeander(
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
   let rafId: number | null = null;
   let stopped = false;
+  let lastUiUpdate = 0;
 
   const tick = () => {
     if (stopped) return;
 
-    // New target in [0.78, 1.20]
-    target = 0.78 + Math.random() * 0.42;
+    // Pick new target in [0.78, 1.20]
+    target = MEANDER_MIN + Math.random() * (MEANDER_MAX - MEANDER_MIN);
 
     const startMultiplier = multiplier;
     const startTime = performance.now();
-    // Transition duration: 1.8–4.4 s
-    const duration = 1800 + Math.random() * 2600;
+    const duration = 2000 + Math.random() * 2500; // 2.0s - 4.5s transition
 
     const frame = (now: number) => {
       if (stopped) return;
       const t = Math.min(1, (now - startTime) / duration);
-      // Cubic smooth-step easing
+      // Smooth cubic ease
       const eased = t * t * (3 - 2 * t);
       multiplier = startMultiplier + (target - startMultiplier) * eased;
-      setOutput(clamp01(getBaseVolume() * multiplier));
+
+      // Throttle UI updates to max ~10 FPS to avoid React render lockups
+      if (now - lastUiUpdate > 100 || t >= 1) {
+        lastUiUpdate = now;
+        try {
+          setOutput(clamp01(getBaseVolume() * multiplier));
+        } catch {
+          // ignore
+        }
+      }
 
       if (t < 1) {
         rafId = requestAnimationFrame(frame);
       } else {
-        // Pause 350–1250 ms before next step
-        timeoutId = setTimeout(tick, 350 + Math.random() * 900);
+        timeoutId = setTimeout(tick, 500 + Math.random() * 1000);
       }
     };
 
     rafId = requestAnimationFrame(frame);
   };
 
-  tick();
+  timeoutId = setTimeout(tick, 200);
 
   return () => {
     stopped = true;
@@ -67,7 +72,3 @@ export function startMeander(
     if (timeoutId !== null) clearTimeout(timeoutId);
   };
 }
-
-/** Get the current meander multiplier bounds for testing. */
-export const MEANDER_MIN = 0.78;
-export const MEANDER_MAX = 1.20;
