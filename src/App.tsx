@@ -30,7 +30,6 @@ export default function App() {
   const isPlaying = useMixStore((s) => s.isPlaying);
   const mix = useMixStore((s) => s.mix);
   const togglePlayPause = useMixStore((s) => s.togglePlayPause);
-  const setLayerMeander = useMixStore((s) => s.setLayerMeander);
   const setTimerStatus = useMixStore((s) => s.setTimerStatus);
 
   const getEngine = useCallback((): AudioEngine => {
@@ -74,7 +73,7 @@ export default function App() {
         }
         engine.setLayerVolume(
           layer.soundId,
-          computeLayerGain(mix.masterVolume, sliderToGain(layer.baseVolume), layer.meanderMultiplier, true)
+          computeLayerGain(mix.masterVolume, sliderToGain(layer.baseVolume), 1, true)
         );
       } else {
         engine.setLayerVolume(layer.soundId, 0, 0.2);
@@ -83,55 +82,70 @@ export default function App() {
     engine.setMasterVolume(mix.masterVolume);
   }, [isPlaying, mix.layers, mix.masterVolume, getEngine]);
 
-  // Meander modulation
+  // Meander audio modulation (pure Web Audio gain updates, ZERO React state triggers)
+  const enabledLayerIds = mix.layers
+    .filter((l) => l.enabled)
+    .map((l) => l.soundId)
+    .sort()
+    .join(",");
+
   useEffect(() => {
     if (!isPlaying || !mix.meanderEnabled) {
       meanderCleanups.current.forEach((c) => c());
       meanderCleanups.current.clear();
-      mix.layers.forEach((l) => setLayerMeander(l.soundId, 1));
       return;
     }
-    getEngine();
-    mix.layers
+
+    const currentLayers = useMixStore.getState().mix.layers;
+    currentLayers
       .filter((l) => l.enabled)
       .forEach((layer) => {
         if (meanderCleanups.current.has(layer.soundId)) return;
+
         const cleanup = startMeander(
           layer.soundId,
-          () => sliderToGain(useMixStore.getState().mix.layers.find((l) => l.soundId === layer.soundId)?.baseVolume ?? layer.baseVolume),
-          (v) => {
-            const clamped = clamp01(v);
-            setLayerMeander(layer.soundId, clamped / Math.max(0.001, sliderToGain(layer.baseVolume)));
-            if (engineRef.current?.hasLayer(layer.soundId))
-              engineRef.current.setLayerVolume(layer.soundId, computeLayerGain(mix.masterVolume, clamped, 1, true));
+          () => {
+            const current = useMixStore.getState().mix.layers.find((l) => l.soundId === layer.soundId);
+            return sliderToGain(current?.baseVolume ?? layer.baseVolume);
+          },
+          (modulatedGain) => {
+            if (engineRef.current?.hasLayer(layer.soundId)) {
+              const currentMaster = useMixStore.getState().mix.masterVolume;
+              engineRef.current.setLayerVolume(
+                layer.soundId,
+                computeLayerGain(currentMaster, clamp01(modulatedGain), 1, true)
+              );
+            }
           }
         );
         meanderCleanups.current.set(layer.soundId, cleanup);
       });
-    mix.layers
-      .filter((l) => !l.enabled)
-      .forEach((l) => {
-        const c = meanderCleanups.current.get(l.soundId);
-        if (c) {
-          c();
-          meanderCleanups.current.delete(l.soundId);
-        }
-      });
+
+    // Clean up disabled layers
+    const enabledSet = new Set(enabledLayerIds.split(",").filter(Boolean));
+    meanderCleanups.current.forEach((cleanup, id) => {
+      if (!enabledSet.has(id)) {
+        cleanup();
+        meanderCleanups.current.delete(id);
+      }
+    });
+
     return () => {
       meanderCleanups.current.forEach((c) => c());
       meanderCleanups.current.clear();
     };
-  }, [isPlaying, mix.meanderEnabled, mix.layers, mix.masterVolume, getEngine, setLayerMeander]);
+  }, [isPlaying, mix.meanderEnabled, enabledLayerIds]);
 
-  // Timer
+  // Timer interval
   useEffect(() => {
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
     if (mix.timer.status === "running" || mix.timer.status === "fading") {
       timerIntervalRef.current = setInterval(() => {
         const engine = engineRef.current;
         if (!engine) return;
+        const currentTimer = useMixStore.getState().mix.timer;
         const { status, remainingSec: rem } = tickTimer(
-          useMixStore.getState().mix.timer,
+          currentTimer,
           engine,
           () => {
             setTimerStatus("finished");
@@ -139,7 +153,9 @@ export default function App() {
           }
         );
         setRemainingSec(rem);
-        if (status !== useMixStore.getState().mix.timer.status) setTimerStatus(status);
+        if (status !== useMixStore.getState().mix.timer.status) {
+          setTimerStatus(status);
+        }
       }, 1000);
     }
     return () => {
