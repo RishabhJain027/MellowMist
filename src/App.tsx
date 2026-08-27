@@ -197,26 +197,8 @@ export default function App() {
       {/* Top Translucent Glass Navbar */}
       <header className="navbar">
         <div className="navbar__brand">
-          <div className="navbar__brand-logo" aria-hidden="true">
-            <svg viewBox="0 0 256 256" width="32" height="32">
-              <defs>
-                <radialGradient id="nbGlow" cx="50%" cy="40%" r="60%">
-                  <stop offset="0%" stop-color="#0f2b38" />
-                  <stop offset="100%" stop-color="#070d18" />
-                </radialGradient>
-                <linearGradient id="nbCyan" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#5eead4" />
-                  <stop offset="50%" stop-color="#38bdf8" />
-                  <stop offset="100%" stop-color="#818cf8" />
-                </linearGradient>
-              </defs>
-              <rect width="256" height="256" rx="64" fill="url(#nbGlow)" stroke="rgba(94, 234, 212, 0.3)" stroke-width="3" />
-              <circle cx="128" cy="128" r="88" fill="none" stroke="rgba(94, 234, 212, 0.1)" stroke-width="2" stroke-dasharray="4 6" />
-              <path d="M 56 100 C 84 80, 108 120, 136 100 C 164 80, 184 104, 200 100" fill="none" stroke="url(#nbCyan)" stroke-width="11" stroke-linecap="round" />
-              <path d="M 56 132 C 84 110, 116 150, 144 128 C 168 112, 184 138, 200 132" fill="none" stroke="url(#nbCyan)" stroke-width="13" stroke-linecap="round" />
-              <path d="M 56 164 C 80 148, 112 178, 140 160 C 164 148, 184 170, 200 164" fill="none" stroke="url(#nbCyan)" stroke-width="10" stroke-linecap="round" opacity="0.8" />
-              <circle cx="178" cy="84" r="6" fill="#5eead4" />
-            </svg>
+          <div className="navbar__brand-logo" aria-hidden="true" style={{ overflow: "hidden", borderRadius: "10px", width: "34px", height: "34px", border: "1px solid rgba(255, 255, 255, 0.15)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <img src={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/cute-logo.jpg`} alt="MellowMist Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           </div>
           <div>
             <span className="navbar__title">MellowMist</span>
